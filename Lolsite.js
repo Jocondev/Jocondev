@@ -203,7 +203,8 @@ class Lolsite extends LitElement
         _tag : {type: String},
         _puuid : {type: String},
         _idURL : { type: String },
-        _statURL : { type: String }
+        _statURL : { type: String },
+        _token : {type: String}
     }
 
     static styles = css
@@ -283,11 +284,12 @@ class Lolsite extends LitElement
     {
         const name = this.renderRoot.querySelector('#name')?.value;
         const tag = this.renderRoot.querySelector('#tag')?.value;
+        const token = this.renderRoot.querySelector('#token')?.value;
     
-        if (!name || !tag) 
+        if (!name || !tag || !token) 
         {
             console.warn('Missing name or tag');
-            this._error = 'Both fields are required!';
+            this._error = 'All fields are required!';
             return;
         }
     
@@ -296,10 +298,11 @@ class Lolsite extends LitElement
 
         this._name = name;
         this._tag = tag;
+        this._token = token;
     
         this._combined = fullString;
         this._error = '';
-        this._url = `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${name}/${tag}?api_key=RGAPI-93cdb132-f95c-43aa-b7c0-d8161b6d93e4`;
+        this._url = `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${name}/${tag}?api_key=${this._token}`;
 
         this._fetch(name, tag);
     }
@@ -331,7 +334,7 @@ class Lolsite extends LitElement
 
     async _fetchID(puuid)
     {
-        this._idURL = `https://oc1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=9&api_key=RGAPI-93cdb132-f95c-43aa-b7c0-d8161b6d93e4`;
+        this._idURL = `https://oc1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=9&api_key=${this._token}`;
         try
         {
             const response = await fetch(this._idURL);
@@ -353,7 +356,7 @@ class Lolsite extends LitElement
 
     async _fetchStats(puuid)
     {
-        this._statURL = `https://oc1.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}?api_key=RGAPI-93cdb132-f95c-43aa-b7c0-d8161b6d93e4`;
+        this._statURL = `https://oc1.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}?api_key=${this._token}`;
         try
         {
             const response = await fetch(this._statURL);
@@ -422,6 +425,7 @@ class Lolsite extends LitElement
             `
                 <div class="setup">
                     <h3>Enter Summoner Details</h3>
+                    <p>Token: <input type="text" id="token"></p>
                     <p>Summoner Name:<input type="text" id="name"></p>
                     <p>#Tag: <input type="text" id="tag"></p>
                     ${this._error ? html`<p class="error">${this._error}</p>` : null}
@@ -433,8 +437,7 @@ class Lolsite extends LitElement
                     ${this._playerStats.map(data => html `
                         <p>Rank: ${data.tier} ${data.rank}</p>
                         <p>Wins: ${data.wins}</p>
-                        <p>Losses: ${data.losses}</p>    
-                        <img src='${this._getRankImg(data.tier)}'></img>        
+                        <p>Losses: ${data.losses}</p>          
                     `)}
                 </div>
 
@@ -457,6 +460,7 @@ class Lolsite extends LitElement
             `
                 <div class="setup">
                     <h3>Enter Summoner Details</h3>
+                    <p>Token: <input type="text" id="token"></p>
                     <p>Summoner Name:<input type="text" id="name"></p>
                     <p>#Tag: <input type="text" id="tag"></p>
                     ${this._error ? html`<p class="error">${this._error}</p>` : null}
