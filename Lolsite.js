@@ -176,17 +176,17 @@ const champData = {
 
 const rankIcons = {
     "images": [
-        { "name": "UNRANKED", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/3/3e/Season_2022_-_Unranked.png/revision/latest?cb=20231007211842" },
-        { "name": "IRON", "link": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-iron.png" },
-        { "name": "BRONZE", "link": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-bronze.png" },
-        { "name": "SILVER", "link": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-silver.png" },
-        { "name": "GOLD", "link": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-gold.png" },
-        { "name": "PLATINUM", "link": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-platinum.png" },
-        { "name": "EMERALD", "link": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-master.png" },
-        { "name": "DIAMOND", "link": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-diamond.png" },
-        { "name": "MASTER", "link": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-master.png" },
-        { "name": "GRANDMASTER", "link": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-grandmaster.png" },
-        { "name": "CHALLENGER", "link": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-emblem/emblem-challenger.png" }
+        { "name": "UNRANKED", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/1/13/Season_2023_-_Unranked.png" },
+        { "name": "IRON", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/f/f8/Season_2023_-_Iron.png" },
+        { "name": "BRONZE", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/c/cb/Season_2023_-_Bronze.png" },
+        { "name": "SILVER", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/c/c4/Season_2023_-_Silver.png" },
+        { "name": "GOLD", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/7/78/Season_2023_-_Gold.png" },
+        { "name": "PLATINUM", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/b/bd/Season_2023_-_Platinum.png" },
+        { "name": "EMERALD", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/4/4b/Season_2023_-_Emerald.png" },
+        { "name": "DIAMOND", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/3/37/Season_2023_-_Diamond.png" },
+        { "name": "MASTER", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/d/d5/Season_2023_-_Master.png" },
+        { "name": "GRANDMASTER", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/6/64/Season_2023_-_Grandmaster.png" },
+        { "name": "CHALLENGER", "link": "https://static.wikia.nocookie.net/leagueoflegends/images/1/14/Season_2023_-_Challenger.png" }
     ]
 }
 
@@ -238,10 +238,30 @@ class Lolsite extends LitElement
             margin: 10px 0;
         }
 
-        img
+        #champ-icon
         {
-            width: 25px;
-            height: 25px;
+            width: 30px;
+            height: 30px;
+        }
+
+        .rank-info 
+        {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rank-text 
+        {
+            flex-grow: 1;
+        }
+
+        #rank-image 
+        {
+            width: 150px;
+            height: 150px;
+            margin-left: auto;
         }
 
         .profile-stats 
@@ -291,6 +311,11 @@ class Lolsite extends LitElement
             box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
             font-family: sans-serif;
         }
+
+        table, th, td
+        {
+            border: 3px solid;
+        }
     `;
 
     constructor() 
@@ -333,6 +358,7 @@ class Lolsite extends LitElement
 
     async _fetchPlayerStats(puuid, tag)
     {
+        this._error = 'Loading...';
         try 
         {
             const masteryRes = await fetch(
@@ -353,6 +379,8 @@ class Lolsite extends LitElement
                 { tag, masteryData, statsData }
             ];
 
+            console.log(this._fullPlayerData);
+
             this.requestUpdate();
         } 
         catch (error) 
@@ -363,6 +391,7 @@ class Lolsite extends LitElement
 
     async _fetch(name, tag)
     {
+        this._error = 'Loading...';
         try
         {
             const response = await fetch(this._url);
@@ -387,6 +416,7 @@ class Lolsite extends LitElement
 
     async _fetchID(puuid)
     {
+        this._error = 'Loading...';
         this._idURL = `https://oc1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=9&api_key=${this._token}`;
         try
         {
@@ -408,6 +438,7 @@ class Lolsite extends LitElement
 
     async _fetchStats(puuid)
     {
+        this._error = 'Loading...';
         this._statURL = `https://oc1.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}?api_key=${this._token}`;
         try
         {
@@ -466,6 +497,7 @@ class Lolsite extends LitElement
 
     _addPlayer()
     {
+        this._error = 'Loading...';
         const name = this.renderRoot.querySelector('#name')?.value;
         const tag = this.renderRoot.querySelector('#tag')?.value;
         const token = this.renderRoot.querySelector('#token')?.value;
@@ -489,6 +521,7 @@ class Lolsite extends LitElement
 
     async _fetchArray(name, tag)
     {
+        this._error = 'Loading...';
         try
         {
             const response = await fetch(this._url);
@@ -536,13 +569,19 @@ class Lolsite extends LitElement
             <button @click=${this._Reset}>Reset</button>
                 ${this._fullPlayerData.map(player => html`
                     <div class="player-Table">
-                        <h3>${player.tag}</h3>
-                        ${player.statsData.map(data => html`
-                            <p>Rank: ${data.tier} ${data.rank}</p>
-                            <p>Rank Type: ${data.queueType}</p>
-                            <p>Wins: ${data.wins}</p>
-                            <p>Losses: ${data.losses}</p>
-                        `)}
+                    <h3>${player.tag}</h3>
+                        <div class="rank-info">
+                            ${player.statsData.map(data => html`
+                                <div class="rank-text">
+                                    <h3>${player.tag}</h3>
+                                    <p>Rank: ${data.tier} ${data.rank}</p>
+                                    <p>Rank Type: ${data.queueType}</p>
+                                    <p>Wins: ${data.wins}</p>
+                                    <p>Losses: ${data.losses}</p>
+                                </div>
+                                <img src=${this._getRankImg(data.tier)} id="rank-image">
+                            `)}
+                        </div>
                         <table>
                             <thead>
                                 <tr>
@@ -557,7 +596,7 @@ class Lolsite extends LitElement
                                 ${player.masteryData.map(champ => html`
                                     <tr>
                                         <td>
-                                            <img src="https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${champ.championId}.png" alt="Champion Icon">
+                                            <img src="https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${champ.championId}.png" alt="Champion Icon" id="champ-icon">
                                         </td>
                                         <td>${this._getChampName(champ.championId)}</td>
                                         <td>${champ.championLevel}</td>
@@ -573,18 +612,17 @@ class Lolsite extends LitElement
         }
         else
         {
-            return html
-            `
+            return html`
                 <div class="setup">
                     <h3>Enter Summoner Details</h3>
                     <p>Token: <input type="text" id="token"></p>
                     <p>Summoner Name:<input type="text" id="name"></p>
-                    <p>#Tag: <input type="text" id="tag"></p>
+                    <p>#Tag: <input type="text" id="tag"  maxlength="5"></p>
                     ${this._error ? html`<p class="error">${this._error}</p>` : null}
                     <button @click=${this._handleSubmit}>Submit</button>
                     <button @click=${this._addPlayer}>Add Player</button>
                     <p>Players:</p>
-                    ${this._playerTags.map(tag => html `
+                    ${this._playerTags.map(tag => html`
                         <p>${tag}</p>`)}
                 </div>
             `;
