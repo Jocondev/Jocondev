@@ -1,7 +1,8 @@
 import {LitElement, html, css} from 'https://cdn.jsdelivr.net/gh/lit/dist@2/core/lit-core.min.js';
 
 const champData = {
-    "champions": [
+    "champions": 
+    [
         { "id": 266, "name": "Aatrox" },
         { "id": 103, "name": "Ahri" },
         { "id": 84, "name": "Akali" },
@@ -204,7 +205,9 @@ class Lolsite extends LitElement
         _puuid : {type: String},
         _idURL : { type: String },
         _statURL : { type: String },
-        _token : {type: String}
+        _token : {type: String},
+        _players : {state: true},
+        _playerTags : {state: true}
     }
 
     static styles = css
@@ -237,8 +240,8 @@ class Lolsite extends LitElement
 
         img
         {
-            width: 75px;
-            height: 75px;
+            width: 25px;
+            height: 25px;
         }
 
         .profile-stats 
@@ -264,6 +267,30 @@ class Lolsite extends LitElement
             box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
             font-family: sans-serif;
         }
+
+        .player-Info 
+        {
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 6px;
+            background-color: #f9f9f9;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            font-family: sans-serif;
+        }
+
+        .player-Table 
+        {
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 6px;
+            background-color: #f9f9f9;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            font-family: sans-serif;
+        }
     `;
 
     constructor() 
@@ -273,6 +300,9 @@ class Lolsite extends LitElement
         this._error = '';
         this._name = '';
         this._tag = '';
+        this._players = [];
+        this._playerTags = [];
+        this._fullPlayerData = [];
     }
 
     connectedCallback() 
@@ -282,29 +312,53 @@ class Lolsite extends LitElement
 
     _handleSubmit() 
     {
-        const name = this.renderRoot.querySelector('#name')?.value;
-        const tag = this.renderRoot.querySelector('#tag')?.value;
         const token = this.renderRoot.querySelector('#token')?.value;
-    
-        if (!name || !tag || !token) 
+
+        if (!token || this._players.length === 0) 
         {
-            console.warn('Missing name or tag');
-            this._error = 'All fields are required!';
+            this._error = 'Token is required and you must add at least one player!';
             return;
         }
-    
-        const fullString = `${name}#${tag}`;
-        console.log('Combined string:', fullString);
 
-        this._name = name;
-        this._tag = tag;
         this._token = token;
-    
-        this._combined = fullString;
         this._error = '';
-        this._url = `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${name}/${tag}?api_key=${this._token}`;
+        this._fullPlayerData = [];
 
-        this._fetch(name, tag);
+        this._players.forEach((puuid, index) => 
+        {
+            const tag = this._playerTags[index];
+            this._fetchPlayerStats(puuid, tag);
+        });
+    }
+
+    async _fetchPlayerStats(puuid, tag)
+    {
+        try 
+        {
+            const masteryRes = await fetch(
+                `https://oc1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=9&api_key=${this._token}`
+            );
+            const statsRes = await fetch(
+                `https://oc1.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}?api_key=${this._token}`
+            );
+
+            if (!masteryRes.ok || !statsRes.ok) 
+                throw new Error('One or more fetches failed');
+
+            const masteryData = await masteryRes.json();
+            const statsData = await statsRes.json();
+
+            this._fullPlayerData = [
+                ...this._fullPlayerData,
+                { tag, masteryData, statsData }
+            ];
+
+            this.requestUpdate();
+        } 
+        catch (error) 
+        {
+            this._error = 'Error fetching player data';
+        }
     }
 
     async _fetch(name, tag)
@@ -327,7 +381,6 @@ class Lolsite extends LitElement
         }
         catch(error)
         {
-            console.error(error.message);
             this._error = 'Unable to find summoner, check spelling and try again';
         }
     }
@@ -349,7 +402,6 @@ class Lolsite extends LitElement
         }
         catch(error)
         {
-            console.error(error.message);
             this._error = 'Unable to find summoner, check spelling and try again';
         }
     }
@@ -371,7 +423,6 @@ class Lolsite extends LitElement
         }
         catch(error)
         {
-            console.error(error.message);
             this._error = 'Unable to find summoner, check spelling and try again';
         }
     }
@@ -413,45 +464,111 @@ class Lolsite extends LitElement
         return formatted;
     }
 
+    _addPlayer()
+    {
+        const name = this.renderRoot.querySelector('#name')?.value;
+        const tag = this.renderRoot.querySelector('#tag')?.value;
+        const token = this.renderRoot.querySelector('#token')?.value;
+    
+        if (!name || !tag || !token) 
+        {
+            this._error = 'All fields are required!';
+            return;
+        }
+
+        this._name = name;
+        this._tag = tag;
+        this._token = token;
+
+        this._error = '';
+        this._url = `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${name}/${tag}?api_key=${this._token}`;
+
+        this._fetchArray(name, tag);
+
+    }
+
+    async _fetchArray(name, tag)
+    {
+        try
+        {
+            const response = await fetch(this._url);
+            if(!response.ok)
+            {
+                throw new Error(`Response status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const temp = data;
+            const tempPuuid = temp.puuid;
+            this._error = '';
+            this._players = [...this._players, tempPuuid];
+            this._playerTags = [...this._playerTags, `${name}#${tag}`]
+
+        }
+        catch(error)
+        {
+            this._error = 'Unable to find summoner, check spelling and try again';
+        }
+    }
+
+    _Reset()
+    {
+        this._url = '';
+        this._error = '';
+        this._name = '';
+        this._tag = '';
+        this._token = '';
+        this._puuid = '';
+        this._data = null;
+        this._playerData = [];
+        this._playerStats = [];
+        this._players = [];
+        this._playerTags = [];
+        this._fullPlayerData = [];
+        this.requestUpdate();
+    }
+
     render() 
     {
-        if(this._data)
+        if (this._fullPlayerData.length > 0) 
         {
-            console.log(this._data);
-            console.log(this._name, '#', this._tag, this._puuid);
-            console.log(this._playerData);
-            console.log(this._playerStats);
-            return html
-            `
-                <div class="setup">
-                    <h3>Enter Summoner Details</h3>
-                    <p>Token: <input type="text" id="token"></p>
-                    <p>Summoner Name:<input type="text" id="name"></p>
-                    <p>#Tag: <input type="text" id="tag"></p>
-                    ${this._error ? html`<p class="error">${this._error}</p>` : null}
-                    <button @click=${this._handleSubmit}>Submit</button>
-                </div>
-
-                 <div class = "profile-stats">
-                    <h3>${this._name}#${this._tag}</h3>
-                    ${this._playerStats.map(data => html `
-                        <p>Rank: ${data.tier} ${data.rank}</p>
-                        <p>Wins: ${data.wins}</p>
-                        <p>Losses: ${data.losses}</p>          
-                    `)}
-                </div>
-
-                <div class = "champion-mastery">
-                    ${this._playerData.map(champ => html `
-                        <div class = "champion-box">
-                            <p>Champion: ${this._getChampName(champ.championId)}</p>
-                            <p>Champion Level: ${champ.championLevel}</p>
-                            <p>Champion Points: ${champ.championPoints.toLocaleString()}</p>
-                            <p>Last Played: ${this._getupdatedTime(champ.lastPlayTime)}</p>
-                            <img src = 'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${champ.championId}.png'></img>
-                        </div>
-                    `)}
-                </div>
+            return html`
+            <button @click=${this._Reset}>Reset</button>
+                ${this._fullPlayerData.map(player => html`
+                    <div class="player-Table">
+                        <h3>${player.tag}</h3>
+                        ${player.statsData.map(data => html`
+                            <p>Rank: ${data.tier} ${data.rank}</p>
+                            <p>Rank Type: ${data.queueType}</p>
+                            <p>Wins: ${data.wins}</p>
+                            <p>Losses: ${data.losses}</p>
+                        `)}
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Champion</th>
+                                    <th>Level</th>
+                                    <th>Points</th>
+                                    <th>Last Played</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${player.masteryData.map(champ => html`
+                                    <tr>
+                                        <td>
+                                            <img src="https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${champ.championId}.png" alt="Champion Icon">
+                                        </td>
+                                        <td>${this._getChampName(champ.championId)}</td>
+                                        <td>${champ.championLevel}</td>
+                                        <td>${champ.championPoints.toLocaleString()}</td>
+                                        <td>${this._getupdatedTime(champ.lastPlayTime)}</td>
+                                    </tr>        
+                                `)}
+                            </tbody>
+                        </table>
+                    </div>
+                `)}
             `;
         }
         else
@@ -465,6 +582,10 @@ class Lolsite extends LitElement
                     <p>#Tag: <input type="text" id="tag"></p>
                     ${this._error ? html`<p class="error">${this._error}</p>` : null}
                     <button @click=${this._handleSubmit}>Submit</button>
+                    <button @click=${this._addPlayer}>Add Player</button>
+                    <p>Players:</p>
+                    ${this._playerTags.map(tag => html `
+                        <p>${tag}</p>`)}
                 </div>
             `;
         }
