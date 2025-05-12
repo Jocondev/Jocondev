@@ -143,7 +143,7 @@ const champData = {
         { "id": 516, "name": "Ornn" },
         { "id": 141, "name": "Kayn" },
         { "id": 142, "name": "Zoe" },
-        { "id": 116, "name": "Kai'Sa" },
+        { "id": 145, "name": "Kai'Sa" },
         { "id": 555, "name": "Pyke" },
         { "id": 518, "name": "Neeko" },
         { "id": 517, "name": "Sylas" },
@@ -362,7 +362,7 @@ class Lolsite extends LitElement
         try 
         {
             const masteryRes = await fetch(
-                `https://oc1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=9&api_key=${this._token}`
+                `https://oc1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=10&api_key=${this._token}`
             );
             const statsRes = await fetch(
                 `https://oc1.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}?api_key=${this._token}`
@@ -417,7 +417,7 @@ class Lolsite extends LitElement
     async _fetchID(puuid)
     {
         this._error = 'Loading...';
-        this._idURL = `https://oc1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=9&api_key=${this._token}`;
+        this._idURL = `https://oc1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=10&api_key=${this._token}`;
         try
         {
             const response = await fetch(this._idURL);
@@ -571,16 +571,24 @@ class Lolsite extends LitElement
                     <div class="player-Table">
                     <h3>${player.tag}</h3>
                         <div class="rank-info">
-                            ${player.statsData.map(data => html`
+                            ${player.statsData.length > 0 ? player.statsData.map(data => html`
                                 <div class="rank-text">
-                                    <h3>${player.tag}</h3>
                                     <p>Rank: ${data.tier} ${data.rank}</p>
                                     <p>Rank Type: ${data.queueType}</p>
                                     <p>Wins: ${data.wins}</p>
                                     <p>Losses: ${data.losses}</p>
                                 </div>
                                 <img src=${this._getRankImg(data.tier)} id="rank-image">
-                            `)}
+                            `) :
+                            html `
+                                <div class="rank-text">
+                                    <p>Rank: Unranked</p>
+                                    <p>Rank Type: Ranked Solo</p>
+                                    <p>Wins: 0</p>
+                                    <p>Losses: 0</p>
+                                </div>
+                                <img src=${this._getRankImg("UNRANKED")} id="rank-image">
+                            `}
                         </div>
                         <table>
                             <thead>
